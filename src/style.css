@@ -1,4 +1,154 @@
 @import "tailwindcss";
 
 
+@theme {
+    --color-branding: #efff0a;
+}
+
+@layer components {
+
+}
+
+
+@layer utilities {
+    /* === UTILITAIRES DE BASE === */
+    
+    /* Couleurs de texte avec support dark mode */
+    .text-primary   { @apply text-black dark:text-white; }
+    .text-secondary { @apply text-gray-600 dark:text-gray-300; }
+    .text-muted     { @apply text-gray-500 dark:text-gray-400; }
+    .text-branding  { @apply text-branding dark:text-branding; }
+    .text-white     { @apply text-white dark:text-black; }
+    .text-danger    { @apply text-red-500 dark:text-red-400; }
+    .text-success   { @apply text-green-500 dark:text-green-400; }
+    
+    /* Tailles de texte */
+    .text-xs    { @apply text-xs; }
+    .text-sm    { @apply text-sm; }
+    .text-base  { @apply text-base; }
+    .text-lg    { @apply text-lg; }
+    .text-xl    { @apply text-xl; }
+    .text-2xl   { @apply text-2xl; }
+    
+    /* Poids de texte */
+    .font-normal    { @apply font-normal; }
+    .font-medium    { @apply font-medium; }
+    .font-semibold  { @apply font-semibold; }
+    .font-bold      { @apply font-bold; }
+    
+    /* Espacement */
+    .space-xs   { @apply space-x-1; }
+    .space-sm   { @apply space-x-2; }
+    .space-md   { @apply space-x-3; }
+    .space-lg   { @apply space-x-4; }
+    
+    /* Padding */
+    .p-xs   { @apply p-1; }
+    .p-sm   { @apply p-2; }
+    .p-md   { @apply p-3; }
+    .p-lg   { @apply p-4; }
+    .p-xl   { @apply p-6; }
+    
+    /* Margin */
+    .m-xs   { @apply m-1; }
+    .m-sm   { @apply m-2; }
+    .m-md   { @apply m-3; }
+    .m-lg   { @apply m-4; }
+    .m-xl   { @apply m-6; }
+    
+    /* Coins arrondis */
+    
+    /* === LAYOUT === */
+    .bg-default {
+        @apply bg-black;
+    }
+
+    .layout-default {
+        @apply flex-1 w-full relative min-h-16 shrink-0;
+    }
+
+    .layout-content {
+        @apply flex-5 w-full relative min-h-0 shrink;
+    }
+
+    .frame-shape {
+        @apply  absolute inset-0;
+    }
+
+    .frame-style {
+        @apply bg-white/50 dark:bg-gray-500/50 backdrop-blur-sm rounded-full;
+    }
+
+    .navbar-layout {
+        @apply h-full flex flex-row items-center justify-between mx-4 min-h-20;
+    }
+
+
+    .widget-shape {
+        @apply absolute inset-0 bg-red-500/25;
+    }
+
+    .widget-style {
+        @apply bg-white dark:bg-gray-500 backdrop-blur-sm rounded-2xl;
+    }
+
+    .widget-header {
+
+    }
+
+    .widget-content {
+
+    }
+
+    .widget-footer {
+
+    }
+
+    /* === BOUTONS === */
+    
+    /* Classes de base pour tous les boutons */
+    .btn-base {
+        @apply inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+
+    /* Tailles pour boutons avec texte - composées d'utilitaires */
+    .btn-xs { @apply px-3 py-1.5 text-xs rounded-xl; }
+    .btn-sm { @apply px-4 py-2 text-sm rounded-xl; }
+    .btn-md { @apply px-6 py-3 text-sm rounded-2xl; }
+    .btn-lg { @apply px-8 py-4 text-base rounded-2xl; }
+    .btn-xl { @apply px-10 py-5 text-lg rounded-3xl; }
+
+    /* Tailles pour boutons icône seule (circulaires) - composées d'utilitaires */
+    .btn-icon-xs { @apply p-1.5 rounded-full; }
+    .btn-icon-sm { @apply p-2 rounded-full; }
+    .btn-icon-md { @apply p-2.5 rounded-full; }
+    .btn-icon-lg { @apply p-3 rounded-full; }
+    .btn-icon-xl { @apply p-4 rounded-full; }
+
+    /* Variants de couleurs - composés d'utilitaires */
+    .btn-primary { @apply bg-branding text-white hover:bg-gray-800 focus:ring-gray-500 active:bg-gray-900; }
+    .btn-secondary { @apply bg-gray-100 text-black dark:text-white hover:bg-gray-200 focus:ring-gray-300 active:bg-gray-300; }
+    .btn-outline { @apply border-2 border-black text-black dark:text-white hover:bg-gray-50 focus:ring-gray-500 active:bg-gray-100; }
+    .btn-ghost { @apply text-black dark:text-white hover:bg-gray-50 focus:ring-gray-500 active:bg-gray-100; }
+    .btn-danger { @apply bg-red-500 text-white hover:bg-red-600 focus:ring-red-400 active:bg-red-700; }
+
+    /* Couleurs des icônes - utilisent les utilitaires de couleur */
+    .btn-primary .icon { @apply text-black; }
+    .btn-secondary .icon { @apply text-black dark:text-white; }
+    .btn-outline .icon { @apply text-black dark:text-white; }
+    .btn-ghost .icon { @apply text-black dark:text-white; }
+    .btn-danger .icon { @apply text-white; }
+
+
+    /* États interactifs */
+    .btn-hover {
+         @apply transform scale-105; 
+        }
+
+    .btn-pressed {
+         @apply transform scale-95; 
+        }
+}
+
+
 

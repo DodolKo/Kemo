@@ -1,0 +1,36 @@
+{
+  "name": "kemo",
+  "short_name": "kemo",
+  "description": "kemo - Votre Application pour intéragir avec votre robots Kemo",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "icons": [
+    { "src": "/pwa/icons/android/android-launchericon-48-48.png", "sizes": "48x48", "type": "image/png", "purpose": "any" },
+    { "src": "/pwa/icons/android/android-launchericon-72-72.png", "sizes": "72x72", "type": "image/png", "purpose": "any" },
+    { "src": "/pwa/icons/android/android-launchericon-96-96.png", "sizes": "96x96", "type": "image/png", "purpose": "any" },
+    { "src": "/pwa/icons/android/android-launchericon-144-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any" },
+    { "src": "/pwa/icons/android/android-launchericon-192-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/pwa/icons/android/android-launchericon-512-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [
+    {
+      "src": "/pwa/screenshots/desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Capture d'écran de l'application Kemo sur desktop"
+    },
+    {
+      "src": "/pwa/screenshots/mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Capture d'écran de l'application Kemo sur mobile"
+    }
+  ]
+}
