@@ -31,7 +31,15 @@ import {
   ArrowRightIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-  BookmarkIcon
+  BookmarkIcon,
+  ChartBarIcon,
+  ChartPieIcon,
+  DocumentTextIcon,
+  ClipboardDocumentListIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  InformationCircleIcon
 } from '@heroicons/vue/24/outline'
 
 // Importez les versions "solid" pour l'état actif
@@ -50,7 +58,9 @@ const props = defineProps({
         'home', 'user', 'settings', 'search', 'menu', 'close',
         'heart', 'star', 'bookmark', 'bell', 'mail', 'phone', 
         'calendar', 'edit', 'delete', 'download', 'upload', 'share',
-        'arrow-left', 'arrow-right', 'arrow-up', 'arrow-down'
+        'arrow-left', 'arrow-right', 'arrow-up', 'arrow-down',
+        'chart-bar', 'chart-pie', 'document', 'clipboard',
+        'clock', 'warning', 'success', 'info'
       ]
       return availableIcons.includes(value)
     }
@@ -109,7 +119,15 @@ const iconMap = {
   'arrow-left': ArrowLeftIcon,
   'arrow-right': ArrowRightIcon,
   'arrow-up': ChevronUpIcon,
-  'arrow-down': ChevronDownIcon
+  'arrow-down': ChevronDownIcon,
+  'chart-bar': ChartBarIcon,
+  'chart-pie': ChartPieIcon,
+  document: DocumentTextIcon,
+  clipboard: ClipboardDocumentListIcon,
+  clock: ClockIcon,
+  warning: ExclamationTriangleIcon,
+  success: CheckCircleIcon,
+  info: InformationCircleIcon
 }
 
 // Mapping pour les icônes en état actif
@@ -169,6 +187,10 @@ const ariaLabel = computed(() => {
   
   .icon-2xl {
     @apply w-14 h-14;
+  }
+  
+  .icon-3xl {
+    @apply w-16 h-16;
   }
 }
 </style> 

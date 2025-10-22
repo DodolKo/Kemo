@@ -2,7 +2,10 @@
 
 
 @theme {
-    --color-branding: #efff0a;
+    --color-branding: #10b981;
+    --color-triggerYellow: #efff0a;
+
+    
 }
 
 @layer components {
@@ -64,11 +67,19 @@
     }
 
     .layout-default {
-        @apply flex-1 w-full relative min-h-16 shrink-0;
+        @apply w-full h-[15%] relative shrink-0;
     }
 
     .layout-content {
-        @apply flex-5 w-full relative min-h-0 shrink;
+        @apply flex-1 w-full relative shrink pt-30 px-2;
+    }
+
+    .fixed-top {
+        @apply fixed top-0 left-0 right-0 z-50;
+    }
+
+    .fixed-bottom {
+        @apply fixed bottom-0 left-0 right-0 z-50;
     }
 
     .frame-shape {
@@ -80,28 +91,33 @@
     }
 
     .navbar-layout {
-        @apply h-full flex flex-row items-center justify-between mx-4 min-h-20;
+        @apply h-full flex flex-row items-center justify-between mx-2 min-h-20;
     }
 
 
     .widget-shape {
-        @apply absolute inset-0 bg-red-500/25;
+        @apply absolute inset-0;
     }
 
     .widget-style {
-        @apply bg-white dark:bg-gray-500 backdrop-blur-sm rounded-2xl;
+        @apply bg-white dark:bg-gray-900 rounded-2xl;
     }
 
-    .widget-header {
+    .widget-border {
+        @apply border-2 border-gray-100/25 dark:border-gray-700/50 ;
+    }
 
+
+    .widget-header {
+        @apply flex-shrink-0;
     }
 
     .widget-content {
-
+        @apply flex-1 flex overflow-auto;
     }
 
     .widget-footer {
-
+        @apply flex-shrink-0;
     }
 
     /* === BOUTONS === */
@@ -119,21 +135,21 @@
     .btn-xl { @apply px-10 py-5 text-lg rounded-3xl; }
 
     /* Tailles pour boutons icône seule (circulaires) - composées d'utilitaires */
-    .btn-icon-xs { @apply p-1.5 rounded-full; }
-    .btn-icon-sm { @apply p-2 rounded-full; }
-    .btn-icon-md { @apply p-2.5 rounded-full; }
-    .btn-icon-lg { @apply p-3 rounded-full; }
-    .btn-icon-xl { @apply p-4 rounded-full; }
+    .btn-icon-xs { @apply p-1.5 rounded-full;   }
+    .btn-icon-sm { @apply p-2 rounded-full;     }
+    .btn-icon-md { @apply p-2.5 rounded-full;   }
+    .btn-icon-lg { @apply p-3 rounded-full;     }
+    .btn-icon-xl { @apply p-4 rounded-full;     }
 
     /* Variants de couleurs - composés d'utilitaires */
-    .btn-primary { @apply bg-branding text-white hover:bg-gray-800 focus:ring-gray-500 active:bg-gray-900; }
-    .btn-secondary { @apply bg-gray-100 text-black dark:text-white hover:bg-gray-200 focus:ring-gray-300 active:bg-gray-300; }
-    .btn-outline { @apply border-2 border-black text-black dark:text-white hover:bg-gray-50 focus:ring-gray-500 active:bg-gray-100; }
-    .btn-ghost { @apply text-black dark:text-white hover:bg-gray-50 focus:ring-gray-500 active:bg-gray-100; }
-    .btn-danger { @apply bg-red-500 text-white hover:bg-red-600 focus:ring-red-400 active:bg-red-700; }
+    .btn-primary    { @apply bg-branding text-white hover:bg-gray-800 focus:ring-branding active:bg-yellow-50/25; }
+    .btn-secondary  { @apply bg-gray-100 text-black dark:text-white hover:bg-gray-200 focus:ring-gray-300 active:bg-gray-300; }
+    .btn-outline    { @apply border-2 border-black text-black dark:text-white hover:bg-gray-50 focus:ring-gray-500 active:bg-gray-100; }
+    .btn-ghost      { @apply text-black dark:text-white hover:bg-gray-50 focus:ring-gray-500 active:bg-gray-100; }
+    .btn-danger     { @apply bg-red-500 text-white hover:bg-red-600 focus:ring-red-400 active:bg-red-700; }
 
     /* Couleurs des icônes - utilisent les utilitaires de couleur */
-    .btn-primary .icon { @apply text-black; }
+    .btn-primary .icon { @apply text-white; }
     .btn-secondary .icon { @apply text-black dark:text-white; }
     .btn-outline .icon { @apply text-black dark:text-white; }
     .btn-ghost .icon { @apply text-black dark:text-white; }
@@ -148,6 +164,11 @@
     .btn-pressed {
          @apply transform scale-95; 
         }
+
+
+
+
+
 }
 
 

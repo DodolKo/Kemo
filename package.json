@@ -13,6 +13,7 @@
     "@tailwindcss/vite": "^4.1.15",
     "@vueuse/core": "^13.9.0",
     "@vueuse/integrations": "^13.9.0",
+    "gridstack": "^12.3.3",
     "sortablejs": "^1.15.6",
     "tailwindcss": "^4.1.15",
     "vue": "^3.5.22",

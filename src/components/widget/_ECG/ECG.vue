@@ -1,5 +1,5 @@
 <template>
-  <AppWidget variant="compact" size="xl">
+  <AppWidget variant="compact" size="xl" :width="2" :height="3">
     <!-- Header avec contrôles -->
     <template #header>
       <div class="flex items-center gap-2">

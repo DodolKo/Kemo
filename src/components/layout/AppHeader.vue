@@ -1,6 +1,12 @@
 <template>
-  <header class="layout-default bg-red-500/25">
+
+  <header class="layout-default fixed-top">
+
+    <div class="progressive-blurr mask-to-t"/>
+
+    
   </header>
+  
 </template>
 
 <script setup>
@@ -8,7 +14,20 @@
 </script>
 
 <style scoped>
-/* keep styles minimal; rely on Tailwind for layout */
+  @reference "tailwindcss";
+
+  @layer utilities {
+
+    /* Progressive blurr utils*/
+    .mask-to-t {
+      mask: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+      -webkit-mask: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    .progressive-blurr {
+      @apply h-full w-full absolute top-0 left-0 backdrop-blur-2xl;
+    }
+  }
 </style>
 
 

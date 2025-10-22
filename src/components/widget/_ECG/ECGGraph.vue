@@ -1,5 +1,5 @@
 <template>
-  <div class="ecg-graph-wrapper">
+  <div class="ecg-graph-wrapper" :style="{ alignItems: verticalAlignClass }">
     <canvas ref="canvasRef" class="ecg-canvas" />
     
     <!-- BPM Display - Style Apple Watch -->
@@ -13,6 +13,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useECGStore } from '@/stores/ecg'
+import { createECGMock } from '@/services/ecgMock'
 import { useHeartbeatDetection } from '@/composables/useHeartbeatDetection'
 import { useCanvasRenderer } from '@/composables/useCanvasRenderer'
 import { movingAverage, normalize } from '@/utils/signal'
@@ -28,6 +29,7 @@ import {
 // ============================================================================
 
 const props = defineProps({
+  // Props alignées sur ECG.vue
   seconds: { 
     type: Number, 
     default: ECG_CONFIG.DEFAULT_DISPLAY_DURATION
@@ -40,13 +42,20 @@ const props = defineProps({
     type: Number,
     default: RENDER_CONFIG.AMPLITUDE
   },
-  sampleRate: {
-    type: Number,
-    default: ECG_CONFIG.DEFAULT_SAMPLE_RATE
-  },
-  running: {
+  autoStart: {
     type: Boolean,
     default: false
+  },
+  // Active la simulation interne (mock). Si false, on attend des données externes.
+  simulation: {
+    type: Boolean,
+    default: true
+  },
+  // Position verticale du graphique dans le widget
+  verticalAlign: {
+    type: String,
+    default: 'center',
+    validator: (value) => ['top', 'center', 'bottom'].includes(value)
   }
 })
 
@@ -70,11 +79,21 @@ const store = useECGStore()
 // Heartbeat detection with config from central config
 const heartbeat = useHeartbeatDetection()
 
+// Computed pour l'alignement vertical
+const verticalAlignClass = computed(() => {
+  const alignMap = {
+    'top': 'flex-start',
+    'center': 'center', 
+    'bottom': 'flex-end'
+  }
+  return alignMap[props.verticalAlign] || 'center'
+})
+
 // Canvas renderer
 let renderer = null
 let animationFrameId = null
-
-// Mode par passes supprimé: le rendu utilise uniquement le temps réel
+let isActive = false // contrôle interne du RAF
+let mock = null // générateur mock si simulation
 
 // ============================================================================
 // RENDERING LOGIC
@@ -101,7 +120,7 @@ function renderFrame() {
  */
 function renderRealtimeMode() {
   // Get ECG data from store
-  const samplesNeeded = Math.floor(props.seconds * props.sampleRate)
+  const samplesNeeded = Math.floor(props.seconds * ECG_CONFIG.DEFAULT_SAMPLE_RATE)
   let rawData = store.snapshot(samplesNeeded)
   
   // Handle empty data
@@ -148,7 +167,7 @@ function renderRealtimeMode() {
  * Schedule next animation frame
  */
 function scheduleNextFrame() {
-  if (props.running) {
+  if (isActive) {
     animationFrameId = requestAnimationFrame(renderFrame)
   }
 }
@@ -168,6 +187,15 @@ function startRendering() {
     renderer.initialize()
   }
   
+  // Démarrer la simulation si demandée
+  if (props.simulation) {
+    if (!mock) mock = createECGMock(ECG_CONFIG.DEFAULT_SAMPLE_RATE)
+    // Indiquer que le stream est actif
+    store.setRunning(true)
+    mock.start((chunk) => store.push(chunk))
+  }
+  
+  isActive = true
   scheduleNextFrame()
 }
 
@@ -179,6 +207,12 @@ function stopRendering() {
     cancelAnimationFrame(animationFrameId)
     animationFrameId = null
   }
+  // Stopper la simulation si active
+  if (mock) {
+    mock.stop()
+  }
+  store.setRunning(false)
+  isActive = false
 }
 
 /**
@@ -193,20 +227,14 @@ function resetDetector() {
 // WATCHERS
 // ============================================================================
 
-watch(() => props.running, (isRunning) => {
-  if (isRunning) {
-    startRendering()
-  } else {
-    stopRendering()
-  }
-})
+// Plus de watcher "running" ici; le parent peut appeler start/stop via expose
 
 // ============================================================================
 // LIFECYCLE HOOKS
 // ============================================================================
 
 onMounted(() => {
-  if (props.running) {
+  if (props.autoStart) {
     startRendering()
   }
 })
@@ -234,16 +262,23 @@ defineExpose({
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 450px;
+  min-height: 0; /* allow parent/grid cell to control size */
+  max-height: 100%;
+  box-sizing: border-box;
   background: transparent;
-  overflow: hidden;
+  overflow: visible; /* allow BPM blur glow to extend outside */
+  padding: 0.5rem; /* internal padding so graph doesn't touch edges */
+  display: flex;
+  justify-content: center;
+  /* align-items sera défini dynamiquement via :style */
 }
 
+/* Canvas fills the wrapper; keep it non-absolute so renderer.resize reads correct dimensions */
 .ecg-canvas {
   display: block;
   width: 100%;
   height: 100%;
-  min-height: 450px;
+  flex: 1 1 auto; /* allow canvas to fill flex container */
 }
 
 /* BPM Display - Typographie professionnelle */
@@ -260,16 +295,16 @@ defineExpose({
 }
 
 .bpm-value {
-  font-size: 5rem;
+  font-size: 2.5rem; /* reduced size */
   font-weight: 700;
   line-height: 0.9;
   color: #10b981;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
   letter-spacing: -0.03em;
-  text-shadow: 
-    0 0 30px rgba(16, 185, 129, 0.7),
-    0 0 60px rgba(16, 185, 129, 0.4),
-    0 2px 4px rgba(0, 0, 0, 0.3);
+  /* Reduced bloom to prevent clipping - use filter instead of text-shadow for better overflow */
+  filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.8))
+          drop-shadow(0 0 24px rgba(16, 185, 129, 0.5))
+          drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .bpm-label {
@@ -281,41 +316,22 @@ defineExpose({
   opacity: 0.9;
 }
 
-/* Responsive - Beaucoup plus grand sur mobile */
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .ecg-graph-wrapper {
-    min-height: 550px;
-  }
-  
-  .ecg-canvas {
-    min-height: 550px;
-  }
-  
   .bpm-value {
-    font-size: 6rem;
+    font-size: 3rem;
   }
-  
   .bpm-label {
-    font-size: 1rem;
+    font-size: 0.875rem;
   }
 }
 
-/* Énorme sur petits écrans pour visibilité maximale */
 @media (max-width: 640px) {
-  .ecg-graph-wrapper {
-    min-height: 600px;
-  }
-  
-  .ecg-canvas {
-    min-height: 600px;
-  }
-  
   .bpm-value {
-    font-size: 7rem;
+    font-size: 3.5rem;
   }
-  
   .bpm-label {
-    font-size: 1.125rem;
+    font-size: 1.05rem;
   }
 }
 </style>
