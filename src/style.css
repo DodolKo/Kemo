@@ -87,7 +87,7 @@
     }
 
     .frame-style {
-        @apply bg-white/50 dark:bg-gray-500/50 backdrop-blur-sm rounded-full;
+        @apply bg-white/5 dark:bg-gray-500/50 backdrop-blur-sm rounded-2xl;
     }
 
     .navbar-layout {
@@ -142,11 +142,11 @@
     .btn-icon-xl { @apply p-4 rounded-full;     }
 
     /* Variants de couleurs - composés d'utilitaires */
-    .btn-primary    { @apply bg-branding text-white hover:bg-gray-800 focus:ring-branding active:bg-yellow-50/25; }
-    .btn-secondary  { @apply bg-gray-100 text-black dark:text-white hover:bg-gray-200 focus:ring-gray-300 active:bg-gray-300; }
-    .btn-outline    { @apply border-2 border-black text-black dark:text-white hover:bg-gray-50 focus:ring-gray-500 active:bg-gray-100; }
-    .btn-ghost      { @apply text-black dark:text-white hover:bg-gray-50 focus:ring-gray-500 active:bg-gray-100; }
-    .btn-danger     { @apply bg-red-500 text-white hover:bg-red-600 focus:ring-red-400 active:bg-red-700; }
+    .btn-primary    { @apply bg-branding text-white hover:brightness-110 focus:ring-branding active:brightness-90; }
+    .btn-secondary  { @apply bg-gray-100 text-black dark:text-white hover:brightness-110 focus:ring-gray-300 active:brightness-90; }
+    .btn-outline    { @apply border-2 border-black text-black dark:text-white hover:brightness-110 focus:ring-gray-500 active:brightness-90; }
+    .btn-ghost      { @apply text-black dark:text-white hover:brightness-110 focus:ring-gray-500 active:brightness-90; }
+    .btn-danger     { @apply bg-red-500 text-white hover:brightness-110 focus:ring-red-400 active:brightness-90; }
 
     /* Couleurs des icônes - utilisent les utilitaires de couleur */
     .btn-primary .icon { @apply text-white; }
@@ -158,7 +158,7 @@
 
     /* États interactifs */
     .btn-hover {
-         @apply transform scale-105; 
+         @apply transform scale-110; 
         }
 
     .btn-pressed {

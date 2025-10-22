@@ -1,5 +1,5 @@
 <template>
-    <nav class="frame-shape frame-style m-sm px-4">
+    <nav class="frame-shape frame-style m-lg px-2">
         <ul class="navbar-layout">
             <li v-for="tab in tabs" :key="tab.id">
                 <AppButton 

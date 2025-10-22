@@ -8,7 +8,6 @@ export default defineConfig({
   plugins: [
     vue(),
     tailwindcss()
-
   ],
   resolve: {
     alias: {
@@ -16,3 +15,4 @@ export default defineConfig({
     }
   }
 })
+

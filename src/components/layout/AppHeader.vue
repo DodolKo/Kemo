@@ -3,6 +3,7 @@
   <header class="layout-default fixed-top">
 
     <div class="progressive-blurr mask-to-t"/>
+    <AppTopData />
 
     
   </header>
@@ -10,7 +11,7 @@
 </template>
 
 <script setup>
-
+  import AppTopData from '../ui/AppTopData.vue';
 </script>
 
 <style scoped>

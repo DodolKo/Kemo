@@ -39,7 +39,8 @@ import {
   ClockIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  Squares2X2Icon
 } from '@heroicons/vue/24/outline'
 
 // Importez les versions "solid" pour l'état actif
@@ -60,7 +61,7 @@ const props = defineProps({
         'calendar', 'edit', 'delete', 'download', 'upload', 'share',
         'arrow-left', 'arrow-right', 'arrow-up', 'arrow-down',
         'chart-bar', 'chart-pie', 'document', 'clipboard',
-        'clock', 'warning', 'success', 'info'
+        'clock', 'warning', 'success', 'info', 'grid'
       ]
       return availableIcons.includes(value)
     }
@@ -127,7 +128,8 @@ const iconMap = {
   clock: ClockIcon,
   warning: ExclamationTriangleIcon,
   success: CheckCircleIcon,
-  info: InformationCircleIcon
+  info: InformationCircleIcon,
+  grid: Squares2X2Icon
 }
 
 // Mapping pour les icônes en état actif
