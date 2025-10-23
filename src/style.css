@@ -71,7 +71,7 @@
     }
 
     .layout-content {
-        @apply flex-1 w-full relative shrink pt-30 px-2;
+        @apply flex-1 w-full relative shrink pt-32.5 px-2;
     }
 
     .fixed-top {

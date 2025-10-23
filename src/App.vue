@@ -16,6 +16,18 @@ import Disk from "@/components/widget/_STATS/Disk.vue"
 import Temp from "@/components/widget/_STATS/Temp.vue"
 
 import Weather from "@/components/widget/_WEATHER/Weather.vue"
+import WeatherCompact from "@/components/widget/_WEATHER/WeatherCompact.vue"
+
+// Widgets pour le robot Kemo 🤖
+import Emotion from "@/components/widget/_ROBOT/Emotion.vue"
+import Battery from "@/components/widget/_ROBOT/Battery.vue"
+import FaceDetection from "@/components/widget/_ROBOT/FaceDetection.vue"
+import VoiceCommand from "@/components/widget/_ROBOT/VoiceCommand.vue"
+import Connection from "@/components/widget/_ROBOT/Connection.vue"
+import Distance from "@/components/widget/_ROBOT/Distance.vue"
+import Light from "@/components/widget/_ROBOT/Light.vue"
+import Sound from "@/components/widget/_ROBOT/Sound.vue"
+import Uptime from "@/components/widget/_ROBOT/Uptime.vue"
 import Timer from "@/components/widget/_TIMER/Timer.vue"
 import Progress from "@/components/widget/_PROGRESS/Progress.vue"
 import Notification from "@/components/widget/_NOTIFICATION/Notification.vue"
@@ -49,23 +61,6 @@ import QuickActions from "@/components/widget/_QUICKACTIONS/QuickActions.vue"
         />
       </AppWidget>
 
-      <!-- Tes AppWidget vides -->
-      <AppWidget 
-        variant="compact" 
-        size="xs"
-        rounded="full"
-        :width="2"
-        :height="1"
-      />
-
-      <AppWidget 
-        variant="compact" 
-        size="xs"
-        rounded="full"
-        :width="2"
-        :height="2"
-      />
-
       <!-- Nouveaux widgets créés -->
       
       <!-- System Monitor - Widget principal (garde pour comparaison) -->
@@ -79,6 +74,20 @@ import QuickActions from "@/components/widget/_QUICKACTIONS/QuickActions.vue"
       
       <!-- Autres widgets -->
       <Weather />
+      <WeatherCompact />
+      
+      <!-- 🤖 Widgets Robot Kemo -->
+      <Emotion />
+      <Battery />
+      <FaceDetection />
+      <Connection />
+      <Distance />
+      <Light />
+      <Sound />
+      <Uptime />
+      <VoiceCommand />
+      
+      <!-- Widgets restants -->
       <Timer />
       <Progress />
       <Notification />

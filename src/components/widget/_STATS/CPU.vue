@@ -14,7 +14,7 @@
           stroke-width="12"
         />
         
-        <!-- Progress circle -->
+        <!-- Progress circle with dynamic glow -->
         <circle
           class="gauge-progress"
           cx="100"
@@ -27,13 +27,14 @@
           :stroke-dasharray="circumference"
           :stroke-dashoffset="dashOffset"
           transform="rotate(-90 100 100)"
+          :style="{ filter: getCircleGlow(cpuUsage) }"
         />
       </svg>
       
       <!-- Center content -->
       <div class="gauge-content">
         <div class="gauge-icon">⚡</div>
-        <div class="gauge-value">{{ cpuUsage }}%</div>
+        <div class="gauge-value" :style="{ color: getColor(cpuUsage), textShadow: getGlow(cpuUsage) }">{{ cpuUsage }}%</div>
         <div class="gauge-label">CPU</div>
       </div>
     </div>
@@ -65,6 +66,16 @@ function getColor(value) {
   if (value < 50) return '#10b981'
   if (value < 75) return '#f59e0b'
   return '#ef4444'
+}
+
+function getGlow(value) {
+  const color = getColor(value)
+  return `0 0 8px ${color}, 0 0 12px ${color}60`
+}
+
+function getCircleGlow(value) {
+  const color = getColor(value)
+  return `drop-shadow(0 0 6px ${color}) drop-shadow(0 0 10px ${color}60)`
 }
 
 function simulateData() {
@@ -116,8 +127,7 @@ defineExpose({ start, stop, value: computed(() => cpuUsage.value) })
 }
 
 .gauge-progress {
-  transition: stroke-dashoffset 0.5s ease, stroke 0.3s ease;
-  filter: drop-shadow(0 0 8px currentColor);
+  transition: stroke-dashoffset 0.5s ease, stroke 0.3s ease, filter 0.3s ease;
 }
 
 .gauge-content {
@@ -139,9 +149,9 @@ defineExpose({ start, stop, value: computed(() => cpuUsage.value) })
   font-size: 2.5rem;
   font-weight: 700;
   line-height: 1;
-  color: rgba(229, 231, 235, 1);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
   letter-spacing: -0.02em;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
 .gauge-label {
@@ -162,4 +172,3 @@ defineExpose({ start, stop, value: computed(() => cpuUsage.value) })
   }
 }
 </style>
-
