@@ -1,0 +1,4 @@
+# Redirect any request from /pwa/icon/* to /pwa/icons/* to fix Netlify 404s
+/pwa/icon/*  /pwa/icons/:splat  200
+
+
