@@ -9,7 +9,7 @@
                     :variant="buttonConfig.variant"
                     :size="buttonConfig.size"
                     :icon-size="buttonConfig.iconSize"
-                    @click="activeTab = tab.id"
+                    @click="navigateToRoute(tab.id)"
                 />
             </li>
         </ul>
@@ -20,9 +20,11 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import AppButton from './AppButton.vue'
 
-const activeTab = ref('home')
+const router = useRouter()
+const route = useRoute()
 
 // Configuration commune pour tous les boutons
 const buttonConfig = {
@@ -31,13 +33,28 @@ const buttonConfig = {
   iconSize: 'sm'
 }
 
-// Configuration des onglets
+// Configuration des onglets avec leurs routes correspondantes
 const tabs = [
-  { id: 'home', icon: 'home', text: 'Home' },
-  { id: 'heart', icon: 'heart', text: 'Heart' },
-  { id: 'chart', icon: 'chart-bar', text: 'Stats' },
-  { id: 'settings', icon: 'settings', text: 'Settings' }
+  { id: 'home', icon: 'home', text: 'Home', route: '/' },
+  { id: 'heart', icon: 'heart', text: 'Heart', route: '/health' },
+  { id: 'chart', icon: 'chart-bar', text: 'Stats', route: '/system' },
+  { id: 'settings', icon: 'settings', text: 'Settings', route: '/tools' }
 ]
+
+// Computed pour déterminer l'onglet actif basé sur la route actuelle
+const activeTab = computed(() => {
+  const currentPath = route.path
+  const currentTab = tabs.find(tab => tab.route === currentPath)
+  return currentTab ? currentTab.id : 'home'
+})
+
+// Fonction pour naviguer vers une route
+const navigateToRoute = (tabId) => {
+  const tab = tabs.find(t => t.id === tabId)
+  if (tab) {
+    router.push(tab.route)
+  }
+}
 </script>
 
 
