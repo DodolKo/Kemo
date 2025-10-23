@@ -1,63 +1,69 @@
 <template>
-  <div class="ecg-graph-wrapper" :style="{ alignItems: verticalAlignClass }">
-<canvas ref="canvasRef" :class="['ecg-canvas', `canvas-align-${props.verticalAlign}`]" :style="{ transform: `translateY(${props.offset}px)` }" />
+  <div class="spo2-graph-wrapper" :style="{ alignItems: verticalAlignClass }">
+  <canvas ref="canvasRef" :class="['spo2-canvas', `canvas-align-${props.verticalAlign}`]" :style="{ transform: `translateY(${props.offset}px)` }" />
     
-    <!-- BPM Display - Style Apple Watch -->
-    <div class="bpm-overlay">
-      <div class="bpm-value">{{ bpm }}</div>
-      <div class="bpm-label">BPM</div>
+    <!-- SpO2 Display - Style Apple Watch médical -->
+    <div class="spo2-overlay">
+      <div class="spo2-value" :style="{ color: spo2Color, filter: spo2Glow }">
+        {{ displaySpO2 }}
+      </div>
+      <div class="spo2-label">SpO₂ %</div>
+      
+      <!-- Pulse Rate intentionally removed: ECG handles BPM -->
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useECGStore } from '@/stores/ecg'
-import { createECGMock } from '@/services/ecgMock'
-import { useHeartbeatDetection } from '@/composables/useHeartbeatDetection'
+<script setup lang="ts">
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useSpO2Store } from '@/stores/spo2'
+import { createSpO2Mock } from '@/services/spo2Mock'
 import { useCanvasRenderer } from '@/composables/useCanvasRenderer'
 import { movingAverage, normalize } from '@/utils/signal'
 import { 
-  ECG_CONFIG, 
-  HEARTBEAT_CONFIG, 
-  RENDER_CONFIG,
-  getOptimalDevicePixelRatio 
-} from '@/config/ecg.config'
+  SPO2_CONFIG,
+  SPO2_RENDER_CONFIG,
+  getSpO2Color,
+  getOptimalDevicePixelRatio
+} from '@/config/spo2.config'
 
 // ============================================================================
 // PROPS & EMITS
 // ============================================================================
 
 const props = defineProps({
-  // Props alignées sur ECG.vue
+  // Durée d'affichage (secondes)
   seconds: { 
     type: Number, 
-    default: ECG_CONFIG.DEFAULT_DISPLAY_DURATION
+    default: SPO2_CONFIG.DEFAULT_DISPLAY_DURATION
   },
+  // Lissage du signal
   smoothing: { 
     type: Number, 
-    default: ECG_CONFIG.DEFAULT_SMOOTHING
+    default: SPO2_CONFIG.DEFAULT_SMOOTHING
   },
+  // Amplitude du graphique
   amplitude: {
     type: Number,
-    default: RENDER_CONFIG.AMPLITUDE
+    default: SPO2_RENDER_CONFIG.AMPLITUDE
   },
+  // Démarrage automatique
   autoStart: {
     type: Boolean,
     default: false
   },
-  // Active la simulation interne (mock). Si false, on attend des données externes.
+  // Mode simulation
   simulation: {
     type: Boolean,
     default: true
   },
-  // Position verticale du graphique dans le widget
+  // Position verticale
   verticalAlign: {
     type: String,
     default: 'center',
-    validator: (value) => ['top', 'center', 'bottom'].includes(value)
-  }
-  ,
+    validator: (value: string) => ['top', 'center', 'bottom'].includes(value)
+  },
+  // showPulse removed - ECG handles BPM
   // Vertical offset in px to nudge the canvas downwards (positive => down)
   offset: {
     type: Number,
@@ -65,27 +71,36 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:sampleCount', 'update:bpm'])
+const emit = defineEmits(['update:sampleCount', 'update:spo2'])
 
 // ============================================================================
 // STATE
 // ============================================================================
 
-const canvasRef = ref(null)
-const bpm = ref(HEARTBEAT_CONFIG.TARGET_BPM)
+const canvasRef = ref<HTMLCanvasElement | null>(null)
+const displaySpO2 = ref(98)
+// pulseRate removed - ECG will provide BPM
 const sampleCount = ref(0)
 const devicePixelRatio = getOptimalDevicePixelRatio()
 
 // ============================================================================
-// COMPOSABLES
+// COMPOSABLES & STORES
 // ============================================================================
 
-const store = useECGStore()
+const store = useSpO2Store()
 
-// Heartbeat detection with config from central config
-const heartbeat = useHeartbeatDetection()
+// Pulse detection removed; ECG handles BPM
 
-// Computed pour l'alignement vertical
+// Couleur dynamique selon SpO2
+const spo2Color = computed(() => getSpO2Color(displaySpO2.value))
+
+// Effet de lueur
+const spo2Glow = computed(() => {
+  const color = spo2Color.value
+  return `drop-shadow(0 0 12px ${color}) drop-shadow(0 0 24px ${color}80) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))`
+})
+
+// Alignement vertical
 const verticalAlignClass = computed(() => {
   const alignMap = {
     'top': 'flex-start',
@@ -95,80 +110,65 @@ const verticalAlignClass = computed(() => {
   return alignMap[props.verticalAlign] || 'center'
 })
 
-// Align-self pour empêcher le canvas de s'étirer et permettre un positionnement bas
-const verticalAlignSelf = computed(() => {
-  const selfMap = {
-    'top': 'flex-start',
-    'center': 'center',
-    'bottom': 'flex-end'
-  }
-  return selfMap[props.verticalAlign] || 'center'
-})
-
 // Canvas renderer
-let renderer = null
-let animationFrameId = null
-let isActive = false // contrôle interne du RAF
-let mock = null // générateur mock si simulation
+let renderer: any = null
+let animationFrameId: number | null = null
+let isActive = false
+let mock: any = null
 
 // ============================================================================
 // RENDERING LOGIC
 // ============================================================================
 
 /**
- * Main rendering loop
+ * Boucle de rendu principale
  */
 function renderFrame() {
   if (!renderer || !canvasRef.value) return
   
-  // Resize canvas if needed
+  // Resize si nécessaire
   renderer.resize(devicePixelRatio)
   
-  // Rendu uniquement en mode temps réel
-  renderRealtimeMode()
+  // Rendu du signal PPG
+  renderPPGSignal()
   
-  // Schedule next frame
+  // Frame suivante
   scheduleNextFrame()
 }
 
 /**
- * Mode temps réel - Défilement continu (mode actuel)
+ * Rendu du signal PPG en temps réel
  */
-function renderRealtimeMode() {
-  // Get ECG data from store
-  const samplesNeeded = Math.floor(props.seconds * ECG_CONFIG.DEFAULT_SAMPLE_RATE)
-  let rawData = store.snapshot(samplesNeeded)
+function renderPPGSignal() {
+  // Récupère les données PPG du store
+  const samplesNeeded = Math.floor(props.seconds * SPO2_CONFIG.DEFAULT_SAMPLE_RATE)
+  let rawData = store.snapshotPPG(samplesNeeded)
   
-  // Handle empty data
+  // Gestion données vides
   if (rawData.length < 2) {
     renderer.clear()
     return
   }
   
-  // Update sample count
+  // Mise à jour du compteur
   sampleCount.value = rawData.length
   emit('update:sampleCount', rawData.length)
   
-  // Detect heartbeat and update BPM
-  const detectedBpm = heartbeat.detect(rawData)
-  if (detectedBpm) {
-    bpm.value = detectedBpm
-    emit('update:bpm', detectedBpm)
-  }
+  // BPM detection removed: ECG handles heart rate detection
   
-  // Process signal
+  // Traitement du signal
   if (props.smoothing > 1) {
     rawData = movingAverage(rawData, props.smoothing)
   }
   
-  // Normalize data
+  // Normalisation
   const normalizedData = normalize(
     new Float32Array(rawData), 
-    ECG_CONFIG.NORMALIZATION_RANGE.min, 
-    ECG_CONFIG.NORMALIZATION_RANGE.max
+    SPO2_CONFIG.NORMALIZATION_RANGE.min, 
+    SPO2_CONFIG.NORMALIZATION_RANGE.max
   )
   
-  // Validate and render
+  // Validation et rendu
   if (!normalizedData || normalizedData.length < 2) {
     renderer.clear()
     return
@@ -177,10 +177,8 @@ function renderRealtimeMode() {
   renderer.render(normalizedData)
 }
 
-// Mode médical supprimé
-
 /**
- * Schedule next animation frame
+ * Planifie la prochaine frame
  */
 function scheduleNextFrame() {
   if (isActive) {
@@ -193,22 +191,34 @@ function scheduleNextFrame() {
 // ============================================================================
 
 /**
- * Start rendering loop
+ * Démarre le rendu
  */
 function startRendering() {
   if (!renderer && canvasRef.value) {
     renderer = useCanvasRenderer(canvasRef.value, {
-      amplitude: props.amplitude
+      amplitude: props.amplitude,
+      lineColor: SPO2_RENDER_CONFIG.LINE.color,
+      lineWidth: SPO2_RENDER_CONFIG.LINE.width,
+      glowIntensity: SPO2_RENDER_CONFIG.GLOW.intensity
     })
     renderer.initialize()
   }
   
   // Démarrer la simulation si demandée
   if (props.simulation) {
-    if (!mock) mock = createECGMock(ECG_CONFIG.DEFAULT_SAMPLE_RATE)
-    // Indiquer que le stream est actif
+    if (!mock) mock = createSpO2Mock(SPO2_CONFIG.DEFAULT_SAMPLE_RATE)
+    
     store.setRunning(true)
-    mock.start((chunk) => store.push(chunk))
+    
+    mock.start((data: any) => {
+      // Pousse le signal PPG dans le store
+      store.pushPPG(data.ppgSignal)
+      
+      // Met à jour la valeur SpO2
+      displaySpO2.value = Math.round(data.spo2Value)
+      store.updateSpO2(data.spo2Value)
+      emit('update:spo2', data.spo2Value)
+    })
   }
   
   isActive = true
@@ -216,34 +226,28 @@ function startRendering() {
 }
 
 /**
- * Stop rendering loop
+ * Arrête le rendu
  */
 function stopRendering() {
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId)
     animationFrameId = null
   }
-  // Stopper la simulation si active
+  
   if (mock) {
     mock.stop()
   }
+  
   store.setRunning(false)
   isActive = false
 }
 
 /**
- * Reset heartbeat detector
+ * Reset le détecteur
  */
 function resetDetector() {
-  heartbeat.reset()
-  bpm.value = HEARTBEAT_CONFIG.TARGET_BPM
+  // Pulse detection removed; ECG is responsible for BPM
 }
-
-// ============================================================================
-// WATCHERS
-// ============================================================================
-
-// Plus de watcher "running" ici; le parent peut appeler start/stop via expose
 
 // ============================================================================
 // LIFECYCLE HOOKS
@@ -269,43 +273,40 @@ defineExpose({
   stop: stopRendering,
   reset: resetDetector,
   sampleCount: computed(() => sampleCount.value),
-  bpm: computed(() => bpm.value)
+  spo2: computed(() => displaySpO2.value),
+  // pulse removed from expose; ECG provides BPM
 })
 </script>
 
 <style scoped>
-.ecg-graph-wrapper {
+.spo2-graph-wrapper {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 0; /* allow parent/grid cell to control size */
+  min-height: 0;
   max-height: 100%;
   box-sizing: border-box;
   background: transparent;
-  overflow: visible; /* allow BPM blur glow to extend outside */
-  padding: 0.5rem; /* internal padding so graph doesn't touch edges */
+  overflow: visible;
+  padding: 0.5rem;
   display: flex;
   justify-content: center;
-  /* align-items sera défini dynamiquement via :style */
 }
 
-/* Canvas fills the wrapper; keep it non-absolute so renderer.resize reads correct dimensions */
-.ecg-canvas {
+.spo2-canvas {
   display: block;
   width: 100%;
   height: auto; /* let canvas size be intrinsic and not fill parent */
   max-height: 100%;
-  flex: 0 0 auto; /* prevent automatic stretching */
-  align-self: center; /* default center */
+  flex: 0 0 auto;
 }
 
-/* Helper classes for vertical alignment using margins so canvas can be pushed down */
 .canvas-align-top { margin-bottom: auto; }
 .canvas-align-center { margin: auto 0; }
 .canvas-align-bottom { margin-top: auto; }
 
-/* BPM Display - Typographie professionnelle */
-.bpm-overlay {
+/* SpO2 Display - Typographie professionnelle médicale */
+.spo2-overlay {
   position: absolute;
   top: 1rem;
   right: 1rem;
@@ -317,20 +318,16 @@ defineExpose({
   pointer-events: none;
 }
 
-.bpm-value {
-  font-size: 2.5rem; /* reduced size */
+.spo2-value {
+  font-size: 2.5rem;
   font-weight: 700;
   line-height: 0.9;
-  color: #10b981;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
   letter-spacing: -0.03em;
-  /* Reduced bloom to prevent clipping - use filter instead of text-shadow for better overflow */
-  filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.8))
-          drop-shadow(0 0 24px rgba(16, 185, 129, 0.5))
-          drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  transition: color 0.3s ease;
 }
 
-.bpm-label {
+.spo2-label {
   font-size: 0.875rem;
   font-weight: 600;
   color: rgba(156, 163, 175, 1);
@@ -339,23 +336,64 @@ defineExpose({
   opacity: 0.9;
 }
 
+/* Pulse Display */
+.pulse-display {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+.pulse-icon {
+  font-size: 1rem;
+  animation: heartbeat 1.2s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  10% { transform: scale(1.2); }
+  20% { transform: scale(1); }
+}
+
+.pulse-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ef4444;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+}
+
+.pulse-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(156, 163, 175, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .bpm-value {
+  .spo2-value {
     font-size: 3rem;
   }
-  .bpm-label {
+  .spo2-label {
     font-size: 0.875rem;
+  }
+  .pulse-value {
+    font-size: 1.5rem;
   }
 }
 
 @media (max-width: 640px) {
-  .bpm-value {
+  .spo2-value {
     font-size: 3.5rem;
   }
-  .bpm-label {
+  .spo2-label {
     font-size: 1.05rem;
+  }
+  .pulse-value {
+    font-size: 1.75rem;
   }
 }
 </style>
-

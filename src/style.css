@@ -70,8 +70,20 @@
         @apply w-full h-[15%] relative shrink-0;
     }
 
+    /* Ensure no horizontal page overflow by default; components can opt-in to horizontal scroll */
+    html, body, #app {
+        overflow-x: hidden;
+    }
+
     .layout-content {
-        @apply flex-1 w-full relative shrink pt-32.5 px-2;
+        @apply flex-1 w-full relative shrink pt-32.5 px-2 pb-20;
+    }
+    
+    /* Mobile navigation spacing */
+    @media (max-width: 767px) {
+        .layout-content {
+            @apply pb-24;
+        }
     }
 
     .fixed-top {
@@ -109,7 +121,7 @@
 
 
     .widget-header {
-        @apply flex-shrink-0;
+        @apply shrink-0;
     }
 
     .widget-content {
@@ -117,7 +129,7 @@
     }
 
     .widget-footer {
-        @apply flex-shrink-0;
+        @apply shrink-0;
     }
 
     /* === BOUTONS === */
