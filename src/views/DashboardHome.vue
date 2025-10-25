@@ -3,11 +3,11 @@
     <!-- Overview Dashboard - Mix of key widgets -->
     
     <!-- ECG original -->
-    <AppWidget variant="compact" size="xs" rounded="full" :width="1" :height="2">
+    <AppWidget variant="compact" size="xs" rounded="full" :width="1" :height="1">
       <ECGGraph 
-        :seconds="0.75" 
+        :seconds="3.5" 
         :smoothing="3" 
-        :amplitude="0.28"
+        :amplitude="0.35"
         vertical-align="bottom"
         auto-start 
         simulation
@@ -15,9 +15,21 @@
     </AppWidget>
     
     <!-- Key health widget -->
-    <AppWidget variant="compact" size="lg" :width="1" :height="1">
-      <Oximeter auto-start simulation />
+    <AppWidget variant="compact" size="xs" :width="1" :height="1">
+      <Oximeter 
+        :seconds="3.5"
+        :smoothing="2"
+        :amplitude="0.35"
+        vertical-align="bottom"
+        offset="0"
+        auto-start
+        simulation
+        :show-pulse="true"
+      />
     </AppWidget>
+    
+    <!-- Vitals Display - Nouveau widget BLE -->
+    <VitalsDisplay />
     
     <!-- Robot emotion -->
     <EmotionAVE />
@@ -49,6 +61,7 @@ import ECGGraph from "@/components/widget/_ECG/ECGGraph.vue"
 import Stats from "@/components/widget/_STATS/Stats.vue"
 import Oximeter from "@/components/widget/_HEALTH/Oximeter.vue"
 import Steps from "@/components/widget/_HEALTH/Steps.vue"
+import VitalsDisplay from "@/components/widget/_HEALTH/VitalsDisplay.vue"
 import EmotionAVE from "@/components/widget/_ROBOT/EmotionAVE.vue"
 import Battery from "@/components/widget/_ROBOT/Battery.vue"
 import Connection from "@/components/widget/_ROBOT/Connection.vue"
