@@ -41,14 +41,16 @@ export function useCanvasRenderer(
 
   function initialize(): boolean {
     if (!canvas) return false
-    
-    // Alpha false pour éviter les artefacts de fond noir sur PWA mobile
-    // desynchronized true pour meilleures performances
-    ctx = canvas.getContext('2d', { 
-      alpha: false, 
-      desynchronized: true 
+
+    // Alpha true pour permettre un fond transparent (user request)
+    // On garde "desynchronized: true" pour les performances
+    // Les autres protections (resetTransform / clearing sur backing buffer)
+    // empêchent l'accumulation de transforms et réduisent les artefacts.
+    ctx = canvas.getContext('2d', {
+      alpha: true,
+      desynchronized: true
     })
-    
+
     return ctx !== null
   }
 
