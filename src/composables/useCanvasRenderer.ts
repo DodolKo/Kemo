@@ -33,13 +33,19 @@ export function useCanvasRenderer(
   let ctx: CanvasRenderingContext2D | null = null
   let width = 0
   let height = 0
+  let currentDpr = 1
+
+  // Détecter si on est sur mobile/touch pour réduire le glow
+  const isTouch = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+  const effectiveGlow = isTouch ? Math.min(glowIntensity * 0.5, 6) : glowIntensity
 
   function initialize(): boolean {
     if (!canvas) return false
     
-    // Alpha true pour transparence
+    // Alpha false pour éviter les artefacts de fond noir sur PWA mobile
+    // desynchronized true pour meilleures performances
     ctx = canvas.getContext('2d', { 
-      alpha: true, 
+      alpha: false, 
       desynchronized: true 
     })
     
@@ -55,11 +61,22 @@ export function useCanvasRenderer(
     
     // Only resize if dimensions changed
     if (canvas.width !== newWidth * dpr || canvas.height !== newHeight * dpr) {
+      // Reset transform avant de redimensionner pour éviter l'accumulation de scale
+      if (typeof ctx.resetTransform === 'function') {
+        ctx.resetTransform()
+      } else {
+        ctx.setTransform(1, 0, 0, 1, 0, 0)
+      }
+      
       canvas.width = newWidth * dpr
       canvas.height = newHeight * dpr
-      ctx.scale(dpr, dpr)
+      
+      // Appliquer le scaling avec setTransform pour éviter l'accumulation
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      
       width = newWidth
       height = newHeight
+      currentDpr = dpr
       return true
     }
     
@@ -69,9 +86,17 @@ export function useCanvasRenderer(
   }
 
   function clear(): void {
-    if (!ctx) return
-    // Fond transparent
-    ctx.clearRect(0, 0, width, height)
+    if (!ctx || !canvas) return
+    
+    // Sauvegarder la transform actuelle
+    ctx.save()
+    
+    // Reset transform pour clear tout le backing buffer (pixels physiques)
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    
+    // Restaurer la transform
+    ctx.restore()
   }
 
   function drawSignal(normalizedData: Float32Array | number[]): void {
@@ -82,7 +107,7 @@ export function useCanvasRenderer(
     ctx.lineJoin = RENDER_CONFIG.LINE.join as CanvasLineJoin
     ctx.lineCap = RENDER_CONFIG.LINE.cap as CanvasLineCap
     ctx.strokeStyle = lineColor
-    ctx.shadowBlur = glowIntensity
+    ctx.shadowBlur = effectiveGlow
     ctx.shadowColor = lineColor
     
     // Paramètres du tracé
