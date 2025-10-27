@@ -22,12 +22,13 @@ export function movingAverage(input: Float32Array, window = 3) {
 }
 
 export function normalize(input: Float32Array, min = -1.5, max = 1.5) {
-  // Pas de compression - juste clipper les valeurs extrêmes
+  // Clip values to preserve amplitude without compression
+  // Use the min/max parameters to allow signals beyond [-1,1] for better visibility
   const out = new Float32Array(input.length)
   
   for (let i = 0; i < input.length; i++) {
-    // Garder la valeur telle quelle, juste limiter entre -1 et 1
-    out[i] = Math.max(-1, Math.min(1, input[i]))
+    // Clip to the specified range (default [-1.5, 1.5] for ECG)
+    out[i] = Math.max(min, Math.min(max, input[i]))
   }
   
   return out

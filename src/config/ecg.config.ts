@@ -28,23 +28,23 @@ export const ECG_CONFIG = {
 // ============================================================================
 
 export const HEARTBEAT_CONFIG = {
-  // Seuil de détection des pics R (0-1)
-  PEAK_THRESHOLD: 0.7,
+  // Seuil de détection des pics R (0-1) - Adaptatif maintenant
+  PEAK_THRESHOLD: 0.6,
   
-  // Intervalle minimum entre battements (ms)
-  MIN_INTERVAL_MS: 200,
+  // Intervalle minimum entre battements (ms) - 300ms = 200 BPM max
+  MIN_INTERVAL_MS: 300,
   
-  // Taille maximale de l'historique
-  MAX_HISTORY_SIZE: 5,
+  // Taille maximale de l'historique pour moyenne glissante
+  MAX_HISTORY_SIZE: 8,
   
-  // Plage de BPM valide
+  // Plage de BPM valide élargie pour adultes et enfants
   BPM_RANGE: {
-    min: 60,
-    max: 140
+    min: 40,   // Bradycardie / athlètes
+    max: 200   // Tachycardie / exercice intense
   },
   
   // BPM cible pour le générateur mock
-  TARGET_BPM: 95
+  TARGET_BPM: 72
 } as const
 
 // ============================================================================

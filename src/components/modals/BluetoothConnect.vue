@@ -95,11 +95,13 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useVitals } from '@/stores/useVitals'
+import { useECGStore } from '@/stores/ecg'
 import * as ble from '@/utils/bleKemo.js'
 
 const emit = defineEmits(['close'])
 
 const vitals = useVitals()
+const ecg = useECGStore()
 const connecting = ref(false)
 const error = ref(null)
 
@@ -173,6 +175,19 @@ onMounted(() => {
   ble.setUpdateHandler((state) => {
     vitals.update(state)
   })
+  // Stream ECG chunks into the ECG store when available (real mode)
+  try {
+    ble.setECGHandler((chunk) => {
+      if (chunk) {
+        ecg.setRunning(true)
+        ecg.push(chunk)
+      } else {
+        ecg.setRunning(false)
+      }
+    })
+  } catch (e) {
+    console.error('[BluetoothConnect] Failed to register ECG handler:', e)
+  }
 })
 
 // Cleanup

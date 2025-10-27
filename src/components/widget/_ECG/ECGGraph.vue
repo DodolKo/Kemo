@@ -4,7 +4,7 @@
     
     <!-- BPM Display - Style Apple Watch -->
     <div class="bpm-overlay">
-      <div class="bpm-value">{{ bpm }}</div>
+      <div class="bpm-value" :class="{ 'bpm-danger': bpm >= 200 }">{{ bpm }}</div>
       <div class="bpm-label">BPM</div>
     </div>
   </div>
@@ -17,6 +17,7 @@ import { createECGMock } from '@/services/ecgMock'
 import { useHeartbeatDetection } from '@/composables/useHeartbeatDetection'
 import { useCanvasRenderer } from '@/composables/useCanvasRenderer'
 import { movingAverage, normalize } from '@/utils/signal'
+import * as ble from '@/utils/bleKemo.js'
 import { 
   ECG_CONFIG, 
   HEARTBEAT_CONFIG, 
@@ -49,7 +50,7 @@ const props = defineProps({
   // Active la simulation interne (mock). Si false, on attend des données externes.
   simulation: {
     type: Boolean,
-    default: true
+    default: false
   },
   // Position verticale du graphique dans le widget
   verticalAlign: {
@@ -62,6 +63,11 @@ const props = defineProps({
   offset: {
     type: Number,
     default: 0
+  },
+  // Raw mode: skip smoothing and normalization to show direct ADC values
+  rawMode: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -72,9 +78,18 @@ const emit = defineEmits(['update:sampleCount', 'update:bpm'])
 // ============================================================================
 
 const canvasRef = ref(null)
-const bpm = ref(HEARTBEAT_CONFIG.TARGET_BPM)
+const bpm = ref(0)  // Initialisé à 0, sera mis à jour par la détection
 const sampleCount = ref(0)
 const devicePixelRatio = getOptimalDevicePixelRatio()
+
+// Track if we're receiving data
+let lastDataTime = Date.now() // Init to now to give time for first data
+const NO_DATA_TIMEOUT = 3000 // 3 secondes sans données = pas de signal
+let hasReceivedDataOnce = false // Track if we ever received data
+
+// Track last BPM detection time
+let lastBpmDetectionTime = 0
+const BPM_TIMEOUT = 5000 // 5 secondes sans détection de BPM = remettre à 0
 
 // ============================================================================
 // COMPOSABLES
@@ -139,7 +154,44 @@ function renderRealtimeMode() {
   const samplesNeeded = Math.floor(props.seconds * ECG_CONFIG.DEFAULT_SAMPLE_RATE)
   let rawData = store.snapshot(samplesNeeded)
   
-  // Handle empty data
+  // Check if we have data
+  const hasData = rawData.length >= 2
+  
+  // We have data - update last data time and mark as received
+  if (hasData) {
+    lastDataTime = Date.now()
+    if (!hasReceivedDataOnce) {
+      hasReceivedDataOnce = true
+    }
+  }
+  
+  // Only show "no data" if we're in real mode AND either:
+  // - Never received data and enough time has passed (3s grace period)
+  // - Received data before but timeout exceeded
+  const timeSinceStart = Date.now() - lastDataTime
+  const noDataDetected = !props.simulation && (
+    (!hasReceivedDataOnce && timeSinceStart > NO_DATA_TIMEOUT) ||
+    (hasReceivedDataOnce && !hasData && timeSinceStart > NO_DATA_TIMEOUT)
+  )
+  
+  // Handle no data: show flat line + 0 BPM
+  if (noDataDetected) {
+    // Generate flat line (baseline at 0)
+    const flatLine = new Float32Array(samplesNeeded)
+    flatLine.fill(0)
+    renderer.render(flatLine)
+    
+    // Display 0 BPM
+    if (bpm.value !== 0) {
+      bpm.value = 0
+      emit('update:bpm', 0)
+    }
+    sampleCount.value = 0
+    emit('update:sampleCount', 0)
+    return
+  }
+  
+  // Handle empty data (simulation mode)
   if (rawData.length < 2) {
     renderer.clear()
     return
@@ -149,32 +201,60 @@ function renderRealtimeMode() {
   sampleCount.value = rawData.length
   emit('update:sampleCount', rawData.length)
   
-  // Detect heartbeat and update BPM
-  const detectedBpm = heartbeat.detect(rawData)
+  // Prepare data for detection: apply moderate pre-filter in rawMode to reduce false positives
+  let detectionData = rawData
+  if (props.rawMode) {
+    // Apply moderate smoothing for detection only (preserve visual raw display)
+    // Window of 3 samples to reduce noise without over-smoothing
+    detectionData = movingAverage(new Float32Array(rawData), 3)
+  }
+
+  // Detect heartbeat and update BPM (pass sample rate)
+  const detectedBpm = heartbeat.detect(Array.from(detectionData), ECG_CONFIG.DEFAULT_SAMPLE_RATE)
   if (detectedBpm) {
-    bpm.value = detectedBpm
-    emit('update:bpm', detectedBpm)
+    // Prefer averaged BPM if available for stability
+    const avg = heartbeat.getAverageBpm()
+    const displayBpm = avg || detectedBpm
+    bpm.value = displayBpm
+    emit('update:bpm', displayBpm)
+    lastBpmDetectionTime = Date.now()
+  } else {
+    // Si pas de détection depuis BPM_TIMEOUT, remettre à 0
+    const timeSinceLastBpm = Date.now() - lastBpmDetectionTime
+    if (timeSinceLastBpm > BPM_TIMEOUT && bpm.value !== 0) {
+      bpm.value = 0
+      emit('update:bpm', 0)
+    }
   }
   
   // Process signal
-  if (props.smoothing > 1) {
-    rawData = movingAverage(rawData, props.smoothing)
+  let processedData = rawData
+  
+  if (props.rawMode) {
+    // Mode RAW: pas de lissage, pas de normalisation
+    // Conversion directe en Float32Array pour le rendu
+    processedData = new Float32Array(rawData)
+  } else {
+    // Mode FILTERED: lissage + normalisation
+    if (props.smoothing > 1) {
+      processedData = movingAverage(new Float32Array(rawData), props.smoothing)
+    }
+    
+    // Normalize data
+    processedData = normalize(
+      new Float32Array(processedData), 
+      ECG_CONFIG.NORMALIZATION_RANGE.min, 
+      ECG_CONFIG.NORMALIZATION_RANGE.max
+    )
   }
   
-  // Normalize data
-  const normalizedData = normalize(
-    new Float32Array(rawData), 
-    ECG_CONFIG.NORMALIZATION_RANGE.min, 
-    ECG_CONFIG.NORMALIZATION_RANGE.max
-  )
-  
   // Validate and render
-  if (!normalizedData || normalizedData.length < 2) {
+  if (!processedData || processedData.length < 2) {
     renderer.clear()
     return
   }
   
-  renderer.render(normalizedData)
+  renderer.render(processedData)
 }
 
 // Mode médical supprimé
@@ -209,6 +289,12 @@ function startRendering() {
     // Indiquer que le stream est actif
     store.setRunning(true)
     mock.start((chunk) => store.push(chunk))
+    hasReceivedDataOnce = true
+    lastDataTime = Date.now() // Mark as receiving data in simulation
+  } else {
+    // Real mode: give grace period for BLE connection
+    lastDataTime = Date.now()
+    hasReceivedDataOnce = false
   }
   
   isActive = true
@@ -236,7 +322,8 @@ function stopRendering() {
  */
 function resetDetector() {
   heartbeat.reset()
-  bpm.value = HEARTBEAT_CONFIG.TARGET_BPM
+  bpm.value = 0
+  lastBpmDetectionTime = 0
 }
 
 // ============================================================================
